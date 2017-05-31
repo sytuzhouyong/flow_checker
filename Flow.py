@@ -98,9 +98,14 @@ class Flow(object):
                 self.action_fields['vlan'] = load_value
             elif string == 'strip_vlan':
                 self.action_fields['vlan'] = 0
+            elif string.startswith('set_tunnel'):
+                load_value = string_to_number(string[11:])
+                self.action_fields['tun_id'] = load_value
             elif string.startswith('output:'):
                 load_value = string_to_number(string[7:])
                 self.action_fields['output'] = load_value
+            elif string.startswith('all'):
+                self.action_fields['output'] = 'normal'
             elif string == 'drop':
                 self.action_fields['is_drop'] = 1
 
