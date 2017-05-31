@@ -80,9 +80,11 @@ class Scene(object):
                 left_flow = dst_flow
 
             if rule.left_field_scope == 'match':
-                left_value = left_flow.match_fields[field]
+                if field in left_flow.match_fields:
+                    left_value = left_flow.match_fields[field]
             elif rule.left_field_scope == 'action':
-                left_value = left_flow.action_fields[field]
+                if field in left_flow.action_fields:
+                    left_value = left_flow.action_fields[field]
 
             # 只有一端有table, eg. table0.action.tun_id != 0
             if rule.right_table_index == -1:
@@ -93,7 +95,7 @@ class Scene(object):
                 right_flow = src_flow
                 # table不相等，说明该规则和流表不匹配，忽略
                 if right_flow.table != rule.right_table_index:
-                    continue
+                    return False
 
                 if rule.right_field_scope == 'match':
                     right_value = right_flow.match_fields[field]
