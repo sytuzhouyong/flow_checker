@@ -16,7 +16,7 @@ flow80 = Flow('table=80,priority=100,actions=resubmit(,85)')
 flow85 = Flow('table=85,priority=80,actions=resubmit(,100)')
 flow100_arp = Flow('table=100,priority=100,arp,dl_dst=ff:ff:ff:ff:ff:ff,actions=resubmit(,110)')
 flow100_default = Flow('table=100,priority=80,actions=resubmit(,120)')
-flow120_recv_to_l3 = Flow('table=120,priority=120,reg1=2,reg2=2,actions=resubmit(,140)')
+flow120_to_l3 = Flow('table=120,priority=120,reg1=2,reg2=2,actions=resubmit(,140)')
 flow140_default = Flow('table=140,priority=80,actions=resubmit(,150)')
 
 
@@ -45,6 +45,7 @@ class FunctionSceneFactory:
                  % (l2_tun_id, local.vm_mac, local.vm_port))
 
         flows = [flow0_recv, flow80, flow85, flow100_default, flow120_arp_recv]
+        # 不能有，因为tun_id是需要判断相等的，否则，L2L3的匹配路径会相互影响，因为都不等于0
         # rules = FlowRule.parse_rules_str('table0.match.tun_id != 0')
         return flows, []
 
@@ -97,6 +98,6 @@ class FunctionSceneFactory:
         flow0_recv = Flow(flow0_recv_str % (l3_tun_id, local.vxlan_port, 2))
         flow150 = Flow('table=150,priority=100,ip,tun_id=%s,nw_dst=%s,actions=mod_dl_dst:%s,mod_dl_src:%s,output:%d'
                        % (l3_tun_id, local.vm_ip, local.vm_mac, local.vlanif10_mac, local.vm_port))
-        flows = [flow0_recv, flow80, flow85, flow100_default, flow120_recv_to_l3, flow140_default, flow150]
+        flows = [flow0_recv, flow80, flow85, flow100_default, flow120_to_l3, flow140_default, flow150]
         # rules = FlowRule.parse_rules_str('table0.match.tun_id != 0')
         return flows, []
