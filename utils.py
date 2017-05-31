@@ -10,7 +10,12 @@ def string_to_number(string):
 
 
 def is_number_string(number_string):
-    return re.match('^0x[0-9a-fA-F]$', number_string) is not None or re.match('^[0-9]+$', number_string) is not None
+    if isinstance(number_string, str):
+        if re.match('^0x[0-9a-fA-F]+$', number_string) is not None:
+            return True
+        if re.match('^[0-9]+$', number_string) is not None:
+            return True
+    return False
 
 
 def ip_hex_string(ip_dot_string):
@@ -43,5 +48,5 @@ def flow_of_index(flows, index):
         if flow.table == index:
             return flow
 
-    print 'not find table at of index:%d!' % index
+    print 'not find table of index:%d!' % index
     return None
