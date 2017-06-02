@@ -5,6 +5,9 @@ from Flow import *
 from utils import *
 from test import *
 
+is_print_match_failed_log = False
+is_print_match_success_log = False
+
 
 class Scene(object):
     def __init__(self, name):
@@ -36,7 +39,8 @@ class Scene(object):
                 print('match flow failed, expected[%s],\n\t but[%s]!' % (flow.text, jump_flow.text))
                 return False, None
 
-            print('flow[%s]\n\t ------------------------match success' % jump_flow.text)
+            if is_print_match_success_log is True:
+                print('flow[%s]\n\t ------------------------match success' % jump_flow.text)
             self.jumped_flows.append(copy.deepcopy(jump_flow))
             jump_flow = jump_flow.execute()
 
@@ -70,6 +74,7 @@ class Scene(object):
         if field not in rules:
             return False
 
+        flag = False
         # 给定的field是否匹配规则
         field_rules = rules[field]
         for rule in field_rules:
@@ -79,23 +84,19 @@ class Scene(object):
             if left_flow is None:
                 left_flow = dst_flow
 
-            if rule.left_field_scope == 'match':
-                if field in left_flow.match_fields:
-                    left_value = left_flow.match_fields[field]
-            elif rule.left_field_scope == 'action':
-                if field in left_flow.action_fields:
-                    left_value = left_flow.action_fields[field]
+            if rule.left_field_scope == 'match' and field in left_flow.match_fields:
+                left_value = left_flow.match_fields[field]
+            elif rule.left_field_scope == 'action' and field in left_flow.action_fields:
+                left_value = left_flow.action_fields[field]
 
-            # 只有一端有table, eg. table0.action.tun_id != 0
-            if rule.right_table_index == -1:
+            if rule.right_table_index == -1:    # 只有一端有table, eg. table0.action.tun_id != 0
                 right_value = rule.right_field
             else:
                 # right_value就是当前src_flow里面的值,因为此时由于src_flow里面的值和标准flow里面的值不一样，才会执行到这里，
                 # 而此时src_flow还没有加入到jumped_flows中，只有rule通过才会加入到jumped_flows中
                 right_flow = src_flow
-                # table不相等，说明该规则和流表不匹配，忽略
-                if right_flow.table != rule.right_table_index:
-                    return False
+                if right_flow.table != rule.right_table_index:  # table不相等，说明该规则和流表不匹配，忽略
+                    continue
 
                 if rule.right_field_scope == 'match':
                     right_value = right_flow.match_fields[field]
@@ -113,7 +114,9 @@ class Scene(object):
             else:
                 print 'do not support relationship[%s]' % rule.relationship
                 return False
-        return True
+
+            flag = True
+        return flag
 
     # src_flow 能否匹配 dst_flow; rules: {'field': [FlowRule]}
     def match(self, src_flow, dst_flow, rules):
@@ -130,8 +133,9 @@ class Scene(object):
             # dst_flow中的匹配域在src_flow中没有
             if field not in src_flow.match_fields:
                 if self.match_field_with_rules(src_flow, dst_flow, field, rules) is not True:
-                    print('flow[%s]\n\t match failed, table%s: %s = %s missed!'
-                          % (dst_flow.text, src_flow.match_fields['table'], field, value))
+                    if is_print_match_failed_log is True:
+                        print('flow[%s]\n\t match failed, table%s: %s = %s missed!'
+                              % (dst_flow.text, src_flow.match_fields['table'], field, value))
                     return False
                 continue
 
@@ -140,8 +144,9 @@ class Scene(object):
                 continue
 
             if self.match_field_with_rules(src_flow, dst_flow, field, rules) is not True:
-                print('flow[%s]\n\t match failed, expect: %s = %s, but is %s'
-                      % (dst_flow.text, field, value, actual_value))
+                if is_print_match_failed_log is True:
+                    print('flow[%s]\n\t match failed, expect: %s = %s, but is %s'
+                          % (dst_flow.text, field, value, actual_value))
                 return False
 
         return True
@@ -150,7 +155,7 @@ class Scene(object):
         if is_test == 1:
             flows_str = test_flows[str(src_flow.table)]
         else:
-            cmd_str = 'ovs-ofctl dump-flows br-int table=%d' % src_flow.table
+            cmd_str = 'ovs-ofctl dump-flows %s table=%d' % ('br-int', src_flow.table)
             # print('execute cmd: %s' % cmd_str)
             flows_str = execute_command(cmd_str)
 
@@ -170,8 +175,9 @@ class Scene(object):
                     # print('flow[%s]\n\t ---------match success' % item.text)
                     matched_flow = item
                 else:
-                    print "flow[%s]\n\t match failed, priority is smaller than flow[%s]." \
-                          % (item.text, matched_flow.text)
+                    if is_print_match_failed_log is True:
+                        print "flow[%s]\n\t match failed, priority is smaller than flow[%s]." \
+                            % (item.text, matched_flow.text)
 
         if matched_flow is not None:
             # 将当前的flow的匹配域集成到匹配的flow中
