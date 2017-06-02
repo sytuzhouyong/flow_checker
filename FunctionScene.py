@@ -12,29 +12,32 @@ class FunctionScene (Scene):
     # config_type: local / remote
     # direction: send / recv
     # pkt_type: request / reply
-    def __init__(self, scene_name, config_type, direction, dl_type, pkt_type):
+    def __init__(self, scene_name, config_type, direction, dl_type, pkt_type, config_manager):
         name = "%s_%s_%s" % (scene_name, dl_type, direction)
         Scene.__init__(self, name)
         self.scene_name = scene_name
         self.dl_type = dl_type
         self.direction = direction
         self.pkt_type = pkt_type
+        self.config_manager = config_manager
         self.jump_flow = Flow('')
 
-        local_config, remote_config = FunctionScene.init_config(scene_name, config_type)
+        local_config, remote_config = self.init_config(scene_name, config_type)
         self.local_config = local_config
         self.remote_config = remote_config
 
         self.init_flow()
         self.init_flows_and_rules(name)
 
-    @staticmethod
-    def init_config(scene_name, config_type):
+    def init_config(self, scene_name, config_type):
+        config_send = self.config_manager.get_config(scene_name, 'send')
+        config_recv = self.config_manager.get_config(scene_name, 'recv')
+
         if config_type == "local":
-            return ConfigManager.local_config(scene_name)
+            return config_send, config_recv
 
         if config_type == "remote":
-            return ConfigManager.remote_config(scene_name)
+            return config_recv, config_send
 
     # TODO: 各个场景下的初始化属性
     def init_flow(self,):
