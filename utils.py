@@ -38,15 +38,18 @@ def execute_command(command):
     return result
 
 
-def ofport_of_device(device_name):
-    result = execute_command('ovs-vsctl get interface %s ofport' % device_name)
+def ofport_number(port_name):
+    result = execute_command('ovs-vsctl get interface %s ofport' % port_name)
     return int(result)
+
+
+def bridge_name_with_port_name(port_name):
+    result = execute_command('ovs-vsctl port-to-br %s' % port_name)
+    return result
 
 
 def flow_of_index(flows, index):
     for flow in flows:
         if flow.table == index:
             return flow
-
-    print 'not find table of index:%d!' % index
     return None
