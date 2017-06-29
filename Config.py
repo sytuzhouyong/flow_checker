@@ -5,9 +5,6 @@ import re
 from utils import *
 
 default_bridge = 'br-int'
-l2_tun_id = 0x4e20
-# l2_tun_id = 0x24B8
-l3_tun_id = 0x4e30
 
 
 class Config(object):
@@ -21,6 +18,8 @@ class Config(object):
         self.vlanif10_ip = ''
         self.vlanif10_mac = ''
         self.vlanif100_mac = ''
+        self.tun_id_l2 = 0
+        self.tun_id_l3 = 0
 
 
 class ConfigManager(object):
