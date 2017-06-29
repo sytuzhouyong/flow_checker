@@ -6,7 +6,7 @@ from FunctionScene import *
 
 flow0_send_str = 'table=0, priority=100, in_port=%d, ' \
                  'actions=load:0x1->NXM_NX_REG2[], load:0x6e->NXM_NX_TUN_ID[],resubmit(,50)'
-flow0_recv_str = 'table=0,priority=100,tun_id=%s,in_port=%d ' \
+flow0_recv_str = 'table=0,priority=100,tun_id=%d,in_port=%d ' \
                  'actions=load:%d->NXM_NX_REG1[],load:2->NXM_NX_REG2[],mod_vlan_vid:0x1,resubmit(,80)'
 flow50_arp_send_str = 'table=50,priority=100,in_port=%d,arp,arp_sha=%s,arp_spa=%s,actions=resubmit(,60)'
 flow50_ip_send_str = 'table=50,priority=100,in_port=%d,ip,dl_src=%s,nw_src=%s,actions=resubmit(,60)'
@@ -39,10 +39,10 @@ class FunctionSceneFactory:
 
     @staticmethod
     def vxlan_arp_recv(local, _):
-        flow0_recv = Flow(flow0_recv_str % (l2_tun_id, local.vxlan_port, 1))
+        flow0_recv = Flow(flow0_recv_str % (local.tun_id_l2, local.vxlan_port, 1))
         flow120_arp_recv = \
-            Flow('table=120,priority=100,tun_id=%s,arp,dl_dst=%s actions=strip_vlan,output:%d'
-                 % (l2_tun_id, local.vm_mac, local.vm_port))
+            Flow('table=120,priority=100,tun_id=%d,arp,dl_dst=%s actions=strip_vlan,output:%d'
+                 % (local.tun_id_l2, local.vm_mac, local.vm_port))
 
         flows = [flow0_recv, flow80, flow85, flow100_default, flow120_arp_recv]
         # 不能有，因为tun_id是需要判断相等的，否则，L2L3的匹配路径会相互影响，因为都不等于0
@@ -64,9 +64,9 @@ class FunctionSceneFactory:
 
     @staticmethod
     def vxlan_ip_recv(local, _):
-        flow0_recv = Flow(flow0_recv_str % (l2_tun_id, local.vxlan_port, 1))
-        flow120_ip_recv = Flow('table=120,priority=100,tun_id=%s,dl_dst=%s actions=strip_vlan,output:%d'
-                               % (l2_tun_id, local.vm_mac, local.vm_port))
+        flow0_recv = Flow(flow0_recv_str % (local.tun_id_l2, local.vxlan_port, 1))
+        flow120_ip_recv = Flow('table=120,priority=100,tun_id=%d,dl_dst=%s actions=strip_vlan,output:%d'
+                               % (local.tun_id_l2, local.vm_mac, local.vm_port))
 
         flows = [flow0_recv, flow80, flow85, flow100_default, flow120_ip_recv]
         # rules = FlowRule.parse_rules_str('table0.match.tun_id != 0')
@@ -95,9 +95,9 @@ class FunctionSceneFactory:
 
     @staticmethod
     def dvr_ip_recv(local, _):
-        flow0_recv = Flow(flow0_recv_str % (l3_tun_id, local.vxlan_port, 2))
+        flow0_recv = Flow(flow0_recv_str % (local.tun_id_l3, local.vxlan_port, 2))
         flow150 = Flow('table=150,priority=100,ip,tun_id=%s,nw_dst=%s,actions=mod_dl_dst:%s,mod_dl_src:%s,output:%d'
-                       % (l3_tun_id, local.vm_ip, local.vm_mac, local.vlanif10_mac, local.vm_port))
+                       % (local.tun_id_l3, local.vm_ip, local.vm_mac, local.vlanif10_mac, local.vm_port))
         flows = [flow0_recv, flow80, flow85, flow100_default, flow120_to_l3, flow140_default, flow150]
         # rules = FlowRule.parse_rules_str('table0.match.tun_id != 0')
         return flows, []
