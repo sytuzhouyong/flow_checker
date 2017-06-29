@@ -153,7 +153,12 @@ class Scene(object):
 
     def jump_to_next_flow(self, src_flow, rules):
         if is_test == 1:
-            flows_str = test_flows[str(src_flow.table)]
+            table_number_string = str(src_flow.table)
+            if table_number_string in test_flows:
+                flows_str = test_flows[str(src_flow.table)]
+            else:
+                print 'not find table %s in test_flows!' % table_number_string
+                return None
         else:
             cmd_str = 'ovs-ofctl dump-flows %s table=%d' % ('br-int', src_flow.table)
             # print('execute cmd: %s' % cmd_str)
