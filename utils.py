@@ -20,7 +20,6 @@ def is_number_string(number_string):
 
 def ip_hex_string(ip_dot_string):
     numbers = ip_dot_string.split('.')
-    print(len(numbers))
     if len(numbers) != 4:
         print("error ip string: " + ip_dot_string)
         return ""
