@@ -76,14 +76,15 @@ class FunctionScene (Scene):
                 elif self.pkt_type == 'reply':
                     updated_fields .update({'dst_mac': self.local_config.vm_mac, 'src_mac': self.remote_config.vm_mac})
 
+        # dvr 场景
         if 'dvr' in self.scene_name:
             updated_fields.update({'dst_mac': self.local_config.vlanif10_mac, })
         
         if self.direction == 'recv':
             if 'vxlan' in self.scene_name:
-                updated_fields.update({'tun_id': l2_tun_id})
-            else:
-                updated_fields.update({'tun_id': l3_tun_id})
+                updated_fields.update({'tun_id': self.remote_config.tun_id_l2})
+            elif 'dvr' in self.scene_name:
+                updated_fields.update({'tun_id': self.remote_config.tun_id_l3})
 
         self.jump_flow.match_fields.update(updated_fields)
 
